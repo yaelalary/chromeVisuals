@@ -3,6 +3,7 @@ import { applyLook, createCoverSettings, type CoverSettings } from '../domain/co
 import type { ImageLayer } from '../domain/imageLayer'
 import type { LookId } from '../domain/looks'
 import { createSeed } from '../domain/random'
+import { surpriseSettings } from '../domain/surprise'
 
 export type CoverSettingsPatch = Partial<CoverSettings>
 export type ImageLayerPatch = Partial<Omit<ImageLayer, 'asset'>>
@@ -22,6 +23,10 @@ export function useCoverSettings() {
     update({ seed: createSeed() })
   }
 
+  function surprise(): void {
+    settings.value = surpriseSettings(settings.value, Math.random)
+  }
+
   function setImageLayer(layer: ImageLayer | null): void {
     update({ image: layer })
   }
@@ -33,5 +38,5 @@ export function useCoverSettings() {
 
   const readonlySettings: Readonly<Ref<CoverSettings>> = settings
 
-  return { settings: readonlySettings, update, selectLook, reshuffle, setImageLayer, updateImage }
+  return { settings: readonlySettings, update, selectLook, reshuffle, surprise, setImageLayer, updateImage }
 }

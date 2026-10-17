@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { SHAPES, type CoverSettings } from '../../domain/cover'
+import { SYMMETRIES } from '../../domain/symmetry'
 import { RANGES } from '../../domain/ranges'
 import { useSettingsSetter } from '../../composables/settingsPatch'
 import type { CoverSettingsPatch } from '../../composables/useCoverSettings'
@@ -22,10 +23,12 @@ const SHAPE_COLUMNS = 4
 
 const set = useSettingsSetter(emit)
 const shapeOptions = optionsFrom(SHAPES)
+const symmetryOptions = optionsFrom(SYMMETRIES)
 const controls = computed(() => new Set(SHAPES[props.settings.shapeId].controls))
 const usesDensity = computed(() => controls.value.has('density'))
 const usesThickness = computed(() => controls.value.has('thickness'))
 const usesChaos = computed(() => controls.value.has('chaos'))
+const usesSymmetry = computed(() => controls.value.has('symmetry'))
 const reshuffleDisabled = computed(() => controls.value.size === 0)
 const isDrawn = computed(() => props.settings.shapeId === 'drawn')
 </script>
@@ -43,8 +46,15 @@ const isDrawn = computed(() => props.settings.shapeId === 'drawn')
       @update:model-value="set('shapeId', $event)"
     />
     <InlineMessage v-if="isDrawn">
-      Dessine sur l'image à gauche. L'épaisseur et le chaos s'appliquent à tous tes traits.
+      Dessine sur l'image à gauche. L'épaisseur, le chaos et la symétrie s'appliquent à tous tes traits.
     </InlineMessage>
+    <SegmentedControl
+      v-if="usesSymmetry"
+      label="Symétrie"
+      :model-value="settings.symmetry"
+      :options="symmetryOptions"
+      @update:model-value="set('symmetry', $event)"
+    />
     <RangeField
       v-if="usesDensity"
       label="Densité"

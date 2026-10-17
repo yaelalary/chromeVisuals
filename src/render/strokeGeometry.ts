@@ -1,5 +1,6 @@
 import { BufferGeometry, CatmullRomCurve3, Float32BufferAttribute, Vector3 } from 'three'
 import { strokeRadiusAt, type Stroke } from '../domain/shapes'
+import { TEXTURE_WORLD_SIZE, TUBE_AROUND_REPEATS } from '../domain/surfaceTextures'
 import { clamp } from '../domain/vector'
 
 const RADIAL_SEGMENTS = 40
@@ -21,6 +22,7 @@ export function buildStrokeGeometry(stroke: Stroke): BufferGeometry {
 
   const positions: number[] = []
   const normals: number[] = []
+  const uvs: number[] = []
   const indices: number[] = []
   const center = new Vector3()
   const normal = new Vector3()
@@ -37,6 +39,7 @@ export function buildStrokeGeometry(stroke: Stroke): BufferGeometry {
         .addScaledVector(frames.binormals[i], Math.sin(angle))
         .normalize()
       normals.push(normal.x, normal.y, normal.z)
+      uvs.push((t * length) / TEXTURE_WORLD_SIZE, (j / RADIAL_SEGMENTS) * TUBE_AROUND_REPEATS)
       positions.push(center.x + radius * normal.x, center.y + radius * normal.y, center.z + radius * normal.z)
     }
   }
@@ -55,6 +58,7 @@ export function buildStrokeGeometry(stroke: Stroke): BufferGeometry {
   const geometry = new BufferGeometry()
   geometry.setAttribute('position', new Float32BufferAttribute(positions, 3))
   geometry.setAttribute('normal', new Float32BufferAttribute(normals, 3))
+  geometry.setAttribute('uv', new Float32BufferAttribute(uvs, 2))
   geometry.setIndex(indices)
   return geometry
 }

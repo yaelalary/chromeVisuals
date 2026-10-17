@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import AppButton from './components/ui/AppButton.vue'
 import ControlPanel from './components/controls/ControlPanel.vue'
 import CoverStage from './components/stage/CoverStage.vue'
 import DrawingToolbar from './components/stage/DrawingToolbar.vue'
@@ -8,7 +9,7 @@ import { useCoverSettings } from './composables/useCoverSettings'
 import { useDrawingTools } from './composables/useDrawingTools'
 import { useImageImport } from './composables/useImageImport'
 
-const { settings, update, selectLook, reshuffle, setImageLayer, updateImage } = useCoverSettings()
+const { settings, update, selectLook, reshuffle, surprise, setImageLayer, updateImage } = useCoverSettings()
 const { importing, importError, importImage, removeImage } = useImageImport(settings, setImageLayer)
 const { mode, brush, isDrawingShape, isDrawing, canUndo, addStroke, undo, clear, setBrush } = useDrawingTools(
   settings,
@@ -25,6 +26,9 @@ const renderUnavailable = computed(() => stage.value?.failed ?? true)
     <header class="app__header">
       <h1 class="app__logo chrome-text">Chrome Visuals</h1>
       <p class="app__tagline">Générateur de covers Y2K</p>
+      <AppButton class="app__surprise" variant="primary" title="Tire une combinaison au hasard" @click="surprise">
+        ✦ Surprise
+      </AppButton>
     </header>
     <main class="app__main">
       <CoverStage
@@ -93,6 +97,10 @@ const renderUnavailable = computed(() => stage.value?.failed ?? true)
   text-transform: uppercase;
 }
 
+.app__surprise {
+  margin-left: auto;
+}
+
 .app__tagline {
   margin: 0;
   font-size: var(--text-sm);
@@ -111,7 +119,8 @@ const renderUnavailable = computed(() => stage.value?.failed ?? true)
 }
 
 .app__panel {
-  overflow-y: auto;
+  min-height: 0;
+  overflow: hidden;
   border-left: 1px solid var(--color-border);
   background: var(--color-surface);
 }
@@ -130,6 +139,7 @@ const renderUnavailable = computed(() => stage.value?.failed ?? true)
   }
 
   .app__panel {
+    overflow: visible;
     border-left: none;
     border-top: 1px solid var(--color-border);
   }

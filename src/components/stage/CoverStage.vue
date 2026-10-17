@@ -22,6 +22,7 @@ const emit = defineEmits<{ stroke: [points: Point2[]] }>()
 const frame = ref<HTMLElement>()
 const sceneCanvas = ref<HTMLCanvasElement>()
 const grainCanvas = ref<HTMLCanvasElement>()
+const effectsCanvas = ref<HTMLCanvasElement>()
 const textCanvas = ref<HTMLCanvasElement>()
 const sketchSurface = ref<SVGSVGElement>()
 
@@ -30,7 +31,7 @@ const drawing = toRef(props, 'drawing')
 const orbitEnabled = computed(() => !props.drawing)
 const pixelSize = useElementPixelSize(frame)
 const { failed, captureScene, resetView } = useChromeRenderer(sceneCanvas, settings, pixelSize, orbitEnabled)
-useCoverOverlays(grainCanvas, textCanvas, settings, pixelSize)
+useCoverOverlays({ grain: grainCanvas, effects: effectsCanvas, text: textCanvas }, settings, pixelSize)
 
 const sketchWidth = computed(() => brushScreenDiameter(props.brush.size, props.settings.thickness, 1))
 const { previewPath, onPointerDown, onPointerMove, onPointerUp } = useSketchPad(sketchSurface, {
@@ -60,6 +61,7 @@ defineExpose({ capture, failed })
       <div ref="frame" class="stage__frame">
         <canvas ref="sceneCanvas" class="stage__layer" />
         <canvas ref="grainCanvas" class="stage__layer stage__layer--passive" :style="grainStyle" />
+        <canvas ref="effectsCanvas" class="stage__layer stage__layer--passive" />
         <canvas ref="textCanvas" class="stage__layer stage__layer--passive" />
         <svg
           v-show="drawing"

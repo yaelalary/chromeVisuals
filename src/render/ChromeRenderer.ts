@@ -1,9 +1,7 @@
 import {
-  DoubleSide,
   Group,
   HalfFloatType,
   Mesh,
-  MeshPhysicalMaterial,
   NeutralToneMapping,
   PerspectiveCamera,
   PMREMGenerator,
@@ -19,17 +17,22 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
+import type { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js'
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
+import type { BackgroundStyleId } from '../domain/backgrounds'
 import { CAMERA_DISTANCE, CAMERA_FOV } from '../domain/camera'
 import type { ImagePlacement } from '../domain/imageLayer'
 import type { ImageRelief } from '../domain/imageRelief'
 import type { EnvironmentSpec, MaterialSpec } from '../domain/looks'
 import type { SceneForm } from '../domain/sceneForm'
-import { createGradientTexture } from './backgroundTexture'
+import type { SymmetryId } from '../domain/symmetry'
+import { buildArtwork, disposeArtwork } from './artwork'
+import type { BackgroundColors } from './backgroundPainters'
+import { createBackgroundTexture } from './backgroundTexture'
+import { ChromeMaterials, type SurfaceFinish } from './ChromeMaterials'
 import { buildEnvironmentScene, disposeScene } from './environmentScene'
 import { buildImageGeometry } from './imageGeometry'
-import { buildLiquidGeometry } from './liquidGeometry'
-import { buildStrokeGeometry } from './strokeGeometry'
+import { createLensPass, setLensEffects } from './lensPass'
 
 const CAMERA_POSITION = new Vector3(0, 0, CAMERA_DISTANCE)
 const BLOOM_RADIUS = 0.5
@@ -37,26 +40,7 @@ const BLOOM_THRESHOLD = 1
 const MULTISAMPLES = 4
 const ENVIRONMENT_BLUR = 0.01
 const ENVIRONMENT_RESOLUTION = 512
-const LIQUID_TILT = -0.3
-const LIQUID_DEPTH = -1.5
 const MIN_RELIEF_DEPTH = 0.001
-
-type FormBuilder<K extends SceneForm['kind']> = (form: Extract<SceneForm, { kind: K }>, material: MeshPhysicalMaterial) => Mesh[]
-
-const FORM_BUILDERS: { [K in SceneForm['kind']]: FormBuilder<K> } = {
-  strokes: (form, material) => form.strokes.map((stroke) => new Mesh(buildStrokeGeometry(stroke), material)),
-  surface: (form, material) => {
-    const mesh = new Mesh(buildLiquidGeometry(form.params), material)
-    mesh.rotation.x = LIQUID_TILT
-    mesh.position.z = LIQUID_DEPTH
-    return [mesh]
-  },
-}
-
-function buildForm(form: SceneForm, material: MeshPhysicalMaterial): Mesh[] {
-  const builder = FORM_BUILDERS[form.kind] as FormBuilder<SceneForm['kind']>
-  return builder(form, material)
-}
 
 export class ChromeRenderer {
   private readonly renderer: WebGLRenderer
@@ -65,10 +49,10 @@ export class ChromeRenderer {
   private readonly controls: OrbitControls
   private readonly composer: EffectComposer
   private readonly bloomPass: UnrealBloomPass
+  private readonly lensPass: ShaderPass
   private readonly pmrem: PMREMGenerator
-  private readonly material = new MeshPhysicalMaterial({ side: DoubleSide })
-  private readonly imageMaterial = new MeshPhysicalMaterial({ side: DoubleSide })
-  private readonly artwork = new Group()
+  private readonly materials = new ChromeMaterials()
+  private artwork: Group | null = null
   private imageMesh: Mesh | null = null
   private imagePlacement: ImagePlacement | null = null
   private environmentTarget: WebGLRenderTarget | null = null
@@ -90,51 +74,39 @@ export class ChromeRenderer {
     this.controls.maxDistance = 24
     this.controls.addEventListener('change', () => this.requestRender())
 
-    this.scene.add(this.artwork)
-
     const target = new WebGLRenderTarget(1, 1, { type: HalfFloatType, samples: MULTISAMPLES })
     this.composer = new EffectComposer(this.renderer, target)
     this.composer.setPixelRatio(1)
     this.composer.addPass(new RenderPass(this.scene, this.camera))
     this.bloomPass = new UnrealBloomPass(new Vector2(1, 1), 0, BLOOM_RADIUS, BLOOM_THRESHOLD)
     this.composer.addPass(this.bloomPass)
+    this.lensPass = createLensPass()
+    this.composer.addPass(this.lensPass)
     this.composer.addPass(new OutputPass())
   }
 
-  setForm(form: SceneForm): void {
+  setForm(form: SceneForm, symmetry: SymmetryId): void {
     this.clearArtwork()
-    const meshes = buildForm(form, this.material)
-    if (meshes.length > 0) this.artwork.add(...meshes)
+    this.artwork = buildArtwork(form, symmetry, this.materials.form)
+    this.scene.add(this.artwork)
     this.requestRender()
   }
 
   setMaterial(spec: MaterialSpec, tint: string): void {
-    for (const material of [this.material, this.imageMaterial]) {
-      material.setValues({
-        metalness: spec.metalness,
-        roughness: spec.roughness,
-        clearcoat: spec.clearcoat,
-        clearcoatRoughness: 0.04,
-        iridescence: spec.iridescence,
-        iridescenceIOR: 1.6,
-        iridescenceThicknessRange: [120, 900],
-        transmission: spec.transmission,
-        ior: spec.ior,
-        thickness: spec.thickness,
-        envMapIntensity: spec.envIntensity,
-      })
-      material.color.set(tint)
-      material.needsUpdate = true
-    }
+    this.materials.setLook(spec, tint)
+    this.requestRender()
+  }
+
+  setSurfaceFinish(finish: SurfaceFinish): void {
+    this.materials.setFinish(finish)
     this.requestRender()
   }
 
   setImage(relief: ImageRelief | null, options: { mirrored: boolean; withColors: boolean }): void {
     this.clearImage()
     if (relief) {
-      this.imageMaterial.vertexColors = options.withColors
-      this.imageMaterial.needsUpdate = true
-      this.imageMesh = new Mesh(buildImageGeometry(relief, options), this.imageMaterial)
+      this.materials.setImageColors(options.withColors)
+      this.imageMesh = new Mesh(buildImageGeometry(relief, options), this.materials.image)
       this.scene.add(this.imageMesh)
       this.applyImagePlacement()
     }
@@ -157,9 +129,9 @@ export class ChromeRenderer {
     this.requestRender()
   }
 
-  setBackground(top: string, bottom: string): void {
+  setBackground(style: BackgroundStyleId, colors: BackgroundColors, seed: number): void {
     this.backgroundTexture?.dispose()
-    this.backgroundTexture = createGradientTexture(top, bottom)
+    this.backgroundTexture = createBackgroundTexture(style, colors, seed)
     this.scene.background = this.backgroundTexture
     this.requestRender()
   }
@@ -167,6 +139,11 @@ export class ChromeRenderer {
   setBloom(strength: number): void {
     this.bloomPass.strength = strength
     this.bloomPass.enabled = strength > 0
+    this.requestRender()
+  }
+
+  setLens(aberration: number, vignette: number): void {
+    setLensEffects(this.lensPass, aberration, vignette)
     this.requestRender()
   }
 
@@ -205,8 +182,7 @@ export class ChromeRenderer {
     this.controls.dispose()
     this.clearArtwork()
     this.clearImage()
-    this.material.dispose()
-    this.imageMaterial.dispose()
+    this.materials.dispose()
     this.environmentTarget?.dispose()
     this.backgroundTexture?.dispose()
     this.pmrem.dispose()
@@ -237,10 +213,10 @@ export class ChromeRenderer {
   }
 
   private clearArtwork(): void {
-    for (const child of [...this.artwork.children]) {
-      if (child instanceof Mesh) child.geometry.dispose()
-      this.artwork.remove(child)
-    }
+    if (!this.artwork) return
+    disposeArtwork(this.artwork)
+    this.scene.remove(this.artwork)
+    this.artwork = null
   }
 
   private requestRender(): void {

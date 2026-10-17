@@ -31,6 +31,7 @@ export type LookDefaults = Pick<
   CoverSettings,
   | 'shapeId'
   | 'tint'
+  | 'backgroundStyle'
   | 'backgroundTop'
   | 'backgroundBottom'
   | 'bloom'
@@ -81,6 +82,7 @@ export const LOOKS: Record<LookId, Look> = {
     },
     defaults: {
       shapeId: 'ribbons',
+      backgroundStyle: 'gradient',
       tint: '#f2f3f5',
       backgroundTop: '#f8f8f8',
       backgroundBottom: '#e8e8ea',
@@ -108,6 +110,7 @@ export const LOOKS: Record<LookId, Look> = {
     },
     defaults: {
       shapeId: 'liquid',
+      backgroundStyle: 'gradient',
       tint: '#e8dfff',
       backgroundTop: '#f4eefc',
       backgroundBottom: '#e5dcf5',
@@ -143,6 +146,7 @@ export const LOOKS: Record<LookId, Look> = {
     },
     defaults: {
       shapeId: 'tangle',
+      backgroundStyle: 'radial',
       tint: '#a9ccff',
       backgroundTop: '#0d2a63',
       backgroundBottom: '#7aaef2',
@@ -169,6 +173,7 @@ export const LOOKS: Record<LookId, Look> = {
     },
     defaults: {
       shapeId: 'shards',
+      backgroundStyle: 'stars',
       tint: '#b8cdf0',
       backgroundTop: '#05070c',
       backgroundBottom: '#0e1424',

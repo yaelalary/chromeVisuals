@@ -1,45 +1,41 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { CoverSettings } from '../../domain/cover'
-import { RANGES } from '../../domain/ranges'
 import { useSettingsSetter } from '../../composables/settingsPatch'
 import type { CoverSettingsPatch } from '../../composables/useCoverSettings'
+import { useBackgroundSwatches } from '../../composables/useSwatches'
 import ColorField from '../ui/ColorField.vue'
 import PanelSection from '../ui/PanelSection.vue'
-import RangeField from '../ui/RangeField.vue'
+import SwatchPicker from '../ui/SwatchPicker.vue'
 
-defineProps<{ settings: CoverSettings }>()
+const props = defineProps<{ settings: CoverSettings }>()
 
 const emit = defineEmits<{ update: [patch: CoverSettingsPatch] }>()
 
 const set = useSettingsSetter(emit)
+const colors = computed(() => ({ top: props.settings.backgroundTop, bottom: props.settings.backgroundBottom }))
+const backgroundSwatches = useBackgroundSwatches(colors)
 </script>
 
 <template>
-  <PanelSection title="Rendu">
+  <PanelSection title="Fond">
+    <SwatchPicker
+      label="Style"
+      :model-value="settings.backgroundStyle"
+      :options="backgroundSwatches"
+      @update:model-value="set('backgroundStyle', $event)"
+    />
     <div class="field-row">
-      <ColorField label="Teinte" :model-value="settings.tint" @update:model-value="set('tint', $event)" />
       <ColorField
-        label="Fond haut"
+        label="Couleur 1"
         :model-value="settings.backgroundTop"
         @update:model-value="set('backgroundTop', $event)"
       />
       <ColorField
-        label="Fond bas"
+        label="Couleur 2"
         :model-value="settings.backgroundBottom"
         @update:model-value="set('backgroundBottom', $event)"
       />
     </div>
-    <RangeField
-      label="Éclat"
-      :model-value="settings.bloom"
-      :range="RANGES.bloom"
-      @update:model-value="set('bloom', $event)"
-    />
-    <RangeField
-      label="Grain"
-      :model-value="settings.grain"
-      :range="RANGES.grain"
-      @update:model-value="set('grain', $event)"
-    />
   </PanelSection>
 </template>

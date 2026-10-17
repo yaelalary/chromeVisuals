@@ -1,5 +1,5 @@
 import { onBeforeUnmount, onMounted, ref, shallowRef, watch, type Ref } from 'vue'
-import type { CoverSettings } from '../domain/cover'
+import { effectiveSymmetry, type CoverSettings } from '../domain/cover'
 import { imagePlacement } from '../domain/imageLayer'
 import { buildImageRelief, isMirrored } from '../domain/imageRelief'
 import { LOOKS } from '../domain/looks'
@@ -42,16 +42,37 @@ export function useChromeRenderer(
   )
 
   watch(
-    [renderer, field('backgroundTop'), field('backgroundBottom')],
-    ([instance, top, bottom]) => instance?.setBackground(top, bottom),
+    [renderer, field('surfaceTexture'), field('textureStrength'), field('textureScale')],
+    ([instance, textureId, strength, scale]) => instance?.setSurfaceFinish({ textureId, strength, scale }),
+    { immediate: true },
+  )
+
+  watch(
+    [renderer, field('backgroundStyle'), field('backgroundTop'), field('backgroundBottom'), field('seed')],
+    ([instance, style, top, bottom, seed]) => instance?.setBackground(style, { top, bottom }, seed),
     { immediate: true },
   )
 
   watch([renderer, field('bloom')], ([instance, strength]) => instance?.setBloom(strength), { immediate: true })
 
   watch(
-    [renderer, field('shapeId'), field('seed'), field('density'), field('thickness'), field('chaos'), field('drawnStrokes')],
-    ([instance]) => instance?.setForm(describeForm(settings.value)),
+    [renderer, field('aberration'), field('vignette')],
+    ([instance, aberration, vignette]) => instance?.setLens(aberration, vignette),
+    { immediate: true },
+  )
+
+  watch(
+    [
+      renderer,
+      field('shapeId'),
+      field('seed'),
+      field('density'),
+      field('thickness'),
+      field('chaos'),
+      field('drawnStrokes'),
+      field('symmetry'),
+    ],
+    ([instance]) => instance?.setForm(describeForm(settings.value), effectiveSymmetry(settings.value)),
     { immediate: true },
   )
 

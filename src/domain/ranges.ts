@@ -19,6 +19,12 @@ export const RANGES = {
   imageDepth: { min: 0, max: 3, step: 0.05, decimals: 2 },
   imageOffset: { min: -0.5, max: 0.5, step: 0.01, decimals: 2 },
   imageThreshold: { min: 0.05, max: 0.95, step: 0.01, decimals: 2 },
+  textureStrength: { min: 0, max: 1.5, step: 0.01, decimals: 2 },
+  textureScale: { min: 0.3, max: 4, step: 0.05, decimals: 2 },
+  aberration: { min: 0, max: 1, step: 0.01, decimals: 2 },
+  vignette: { min: 0, max: 1, step: 0.01, decimals: 2 },
+  sparkles: { min: 0, max: 1, step: 0.01, decimals: 2 },
+  scanlines: { min: 0, max: 1, step: 0.01, decimals: 2 },
 } as const satisfies Record<string, NumericRange>
 
 export function clampToRange(value: number, range: NumericRange): number {

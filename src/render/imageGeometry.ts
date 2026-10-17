@@ -4,6 +4,7 @@ import type { ImageRelief } from '../domain/imageRelief'
 const MASK_CUTOFF = 0.5
 const OUTLINE_SMOOTHING_PASSES = 6
 const OUTLINE_SMOOTHING_WEIGHT = 0.5
+const IMAGE_UV_SCALE = 3
 
 interface ImageGeometryOptions {
   mirrored: boolean
@@ -109,8 +110,12 @@ export function buildImageGeometry(relief: ImageRelief, { mirrored, withColors }
   smoothOutline(grid, xs, ys)
 
   const positions: number[] = []
+  const uvs: number[] = []
   for (const side of layers) {
-    for (let i = 0; i < pixelCount; i++) positions.push(xs[i], ys[i], side * heights[i])
+    for (let i = 0; i < pixelCount; i++) {
+      positions.push(xs[i], ys[i], side * heights[i])
+      uvs.push(xs[i] * IMAGE_UV_SCALE, ys[i] * IMAGE_UV_SCALE)
+    }
   }
 
   const indices: number[] = []
@@ -131,6 +136,7 @@ export function buildImageGeometry(relief: ImageRelief, { mirrored, withColors }
 
   const geometry = new BufferGeometry()
   geometry.setAttribute('position', new Float32BufferAttribute(positions, 3))
+  geometry.setAttribute('uv', new Float32BufferAttribute(uvs, 2))
   if (withColors) {
     const colors = linearColors(relief)
     geometry.setAttribute('color', new Float32BufferAttribute(mirrored ? [...colors, ...colors] : colors, 3))
