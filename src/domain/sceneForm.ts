@@ -29,6 +29,7 @@ const FORM_DESCRIBERS: Record<ShapeId, FormDescriber> = {
     kind: 'strokes',
     strokes: drawnStrokesToStrokes(settings.drawnStrokes, formParamsOf(settings)),
   }),
+  none: () => ({ kind: 'strokes', strokes: [] }),
 }
 
 export function describeForm(settings: CoverSettings): SceneForm {

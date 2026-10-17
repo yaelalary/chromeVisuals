@@ -18,18 +18,22 @@ const emit = defineEmits<{
   reshuffle: []
 }>()
 
-const SHAPE_COLUMNS = 3
+const SHAPE_COLUMNS = 4
 
 const set = useSettingsSetter(emit)
 const shapeOptions = optionsFrom(SHAPES)
-const usesDensity = computed(() => SHAPES[props.settings.shapeId].usesDensity)
+const controls = computed(() => new Set(SHAPES[props.settings.shapeId].controls))
+const usesDensity = computed(() => controls.value.has('density'))
+const usesThickness = computed(() => controls.value.has('thickness'))
+const usesChaos = computed(() => controls.value.has('chaos'))
+const reshuffleDisabled = computed(() => controls.value.size === 0)
 const isDrawn = computed(() => props.settings.shapeId === 'drawn')
 </script>
 
 <template>
   <PanelSection title="Forme">
     <template #action>
-      <AppButton @click="emit('reshuffle')">Nouvelle variation</AppButton>
+      <AppButton :disabled="reshuffleDisabled" @click="emit('reshuffle')">Nouvelle variation</AppButton>
     </template>
     <SegmentedControl
       label="Motif"
@@ -49,12 +53,14 @@ const isDrawn = computed(() => props.settings.shapeId === 'drawn')
       @update:model-value="set('density', $event)"
     />
     <RangeField
+      v-if="usesThickness"
       label="Épaisseur"
       :model-value="settings.thickness"
       :range="RANGES.thickness"
       @update:model-value="set('thickness', $event)"
     />
     <RangeField
+      v-if="usesChaos"
       label="Chaos"
       :model-value="settings.chaos"
       :range="RANGES.chaos"

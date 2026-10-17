@@ -21,10 +21,13 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { CAMERA_DISTANCE, CAMERA_FOV } from '../domain/camera'
+import type { ImagePlacement } from '../domain/imageLayer'
+import type { ImageRelief } from '../domain/imageRelief'
 import type { EnvironmentSpec, MaterialSpec } from '../domain/looks'
 import type { SceneForm } from '../domain/sceneForm'
 import { createGradientTexture } from './backgroundTexture'
 import { buildEnvironmentScene, disposeScene } from './environmentScene'
+import { buildImageGeometry } from './imageGeometry'
 import { buildLiquidGeometry } from './liquidGeometry'
 import { buildStrokeGeometry } from './strokeGeometry'
 
@@ -36,6 +39,7 @@ const ENVIRONMENT_BLUR = 0.01
 const ENVIRONMENT_RESOLUTION = 512
 const LIQUID_TILT = -0.3
 const LIQUID_DEPTH = -1.5
+const MIN_RELIEF_DEPTH = 0.001
 
 type FormBuilder<K extends SceneForm['kind']> = (form: Extract<SceneForm, { kind: K }>, material: MeshPhysicalMaterial) => Mesh[]
 
@@ -63,7 +67,10 @@ export class ChromeRenderer {
   private readonly bloomPass: UnrealBloomPass
   private readonly pmrem: PMREMGenerator
   private readonly material = new MeshPhysicalMaterial({ side: DoubleSide })
+  private readonly imageMaterial = new MeshPhysicalMaterial({ side: DoubleSide })
   private readonly artwork = new Group()
+  private imageMesh: Mesh | null = null
+  private imagePlacement: ImagePlacement | null = null
   private environmentTarget: WebGLRenderTarget | null = null
   private backgroundTexture: Texture | null = null
   private size = 1
@@ -102,21 +109,41 @@ export class ChromeRenderer {
   }
 
   setMaterial(spec: MaterialSpec, tint: string): void {
-    this.material.setValues({
-      metalness: spec.metalness,
-      roughness: spec.roughness,
-      clearcoat: spec.clearcoat,
-      clearcoatRoughness: 0.04,
-      iridescence: spec.iridescence,
-      iridescenceIOR: 1.6,
-      iridescenceThicknessRange: [120, 900],
-      transmission: spec.transmission,
-      ior: spec.ior,
-      thickness: spec.thickness,
-      envMapIntensity: spec.envIntensity,
-    })
-    this.material.color.set(tint)
-    this.material.needsUpdate = true
+    for (const material of [this.material, this.imageMaterial]) {
+      material.setValues({
+        metalness: spec.metalness,
+        roughness: spec.roughness,
+        clearcoat: spec.clearcoat,
+        clearcoatRoughness: 0.04,
+        iridescence: spec.iridescence,
+        iridescenceIOR: 1.6,
+        iridescenceThicknessRange: [120, 900],
+        transmission: spec.transmission,
+        ior: spec.ior,
+        thickness: spec.thickness,
+        envMapIntensity: spec.envIntensity,
+      })
+      material.color.set(tint)
+      material.needsUpdate = true
+    }
+    this.requestRender()
+  }
+
+  setImage(relief: ImageRelief | null, options: { mirrored: boolean; withColors: boolean }): void {
+    this.clearImage()
+    if (relief) {
+      this.imageMaterial.vertexColors = options.withColors
+      this.imageMaterial.needsUpdate = true
+      this.imageMesh = new Mesh(buildImageGeometry(relief, options), this.imageMaterial)
+      this.scene.add(this.imageMesh)
+      this.applyImagePlacement()
+    }
+    this.requestRender()
+  }
+
+  setImagePlacement(placement: ImagePlacement): void {
+    this.imagePlacement = placement
+    this.applyImagePlacement()
     this.requestRender()
   }
 
@@ -177,7 +204,9 @@ export class ChromeRenderer {
     cancelAnimationFrame(this.frameRequest)
     this.controls.dispose()
     this.clearArtwork()
+    this.clearImage()
     this.material.dispose()
+    this.imageMaterial.dispose()
     this.environmentTarget?.dispose()
     this.backgroundTexture?.dispose()
     this.pmrem.dispose()
@@ -191,6 +220,20 @@ export class ChromeRenderer {
     this.composer.setSize(pixels, pixels)
     this.camera.aspect = 1
     this.camera.updateProjectionMatrix()
+  }
+
+  private applyImagePlacement(): void {
+    if (!this.imageMesh || !this.imagePlacement) return
+    const { position, width, reliefDepth } = this.imagePlacement
+    this.imageMesh.position.set(...position)
+    this.imageMesh.scale.set(width, width, Math.max(reliefDepth, MIN_RELIEF_DEPTH))
+  }
+
+  private clearImage(): void {
+    if (!this.imageMesh) return
+    this.imageMesh.geometry.dispose()
+    this.scene.remove(this.imageMesh)
+    this.imageMesh = null
   }
 
   private clearArtwork(): void {

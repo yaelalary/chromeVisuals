@@ -1,5 +1,7 @@
 import { onBeforeUnmount, onMounted, ref, shallowRef, watch, type Ref } from 'vue'
 import type { CoverSettings } from '../domain/cover'
+import { imagePlacement } from '../domain/imageLayer'
+import { buildImageRelief, isMirrored } from '../domain/imageRelief'
 import { LOOKS } from '../domain/looks'
 import { describeForm } from '../domain/sceneForm'
 import { ChromeRenderer } from '../render/ChromeRenderer'
@@ -50,6 +52,30 @@ export function useChromeRenderer(
   watch(
     [renderer, field('shapeId'), field('seed'), field('density'), field('thickness'), field('chaos'), field('drawnStrokes')],
     ([instance]) => instance?.setForm(describeForm(settings.value)),
+    { immediate: true },
+  )
+
+  const image = () => settings.value.image
+
+  watch(
+    [renderer, () => image()?.asset, () => image()?.treatment, () => image()?.keep, () => image()?.threshold, () => image()?.colors],
+    ([instance]) => {
+      const layer = image()
+      if (!layer) return instance?.setImage(null, { mirrored: false, withColors: false })
+      instance?.setImage(buildImageRelief(layer.asset, layer), {
+        mirrored: isMirrored(layer.treatment),
+        withColors: layer.colors === 'image',
+      })
+    },
+    { immediate: true },
+  )
+
+  watch(
+    [renderer, () => image()?.scale, () => image()?.offsetX, () => image()?.offsetY, () => image()?.depth, () => image()?.treatment],
+    ([instance]) => {
+      const layer = image()
+      if (layer) instance?.setImagePlacement(imagePlacement(layer))
+    },
     { immediate: true },
   )
 

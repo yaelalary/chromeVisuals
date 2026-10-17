@@ -1,10 +1,12 @@
 import type { DrawnStroke } from './drawing'
 import type { FontId } from './fonts'
+import type { ImageLayer } from './imageLayer'
 import { LOOKS, type LookId } from './looks'
 import { createSeed } from './random'
 import type { StrokeShapeId } from './shapes'
 
-export type ShapeId = StrokeShapeId | 'liquid' | 'drawn'
+export type ShapeId = StrokeShapeId | 'liquid' | 'drawn' | 'none'
+export type FormControl = 'density' | 'thickness' | 'chaos'
 export type TextPosition = 'top' | 'center' | 'bottom'
 export type TextStyle = 'plain' | 'chrome'
 
@@ -16,6 +18,7 @@ export interface CoverSettings {
   thickness: number
   chaos: number
   drawnStrokes: readonly DrawnStroke[]
+  image: ImageLayer | null
   tint: string
   backgroundTop: string
   backgroundBottom: string
@@ -32,17 +35,20 @@ export interface CoverSettings {
 
 export interface ShapeSpec {
   label: string
-  usesDensity: boolean
+  controls: readonly FormControl[]
   keptAcrossLooks: boolean
 }
 
+const GENERATED_CONTROLS: readonly FormControl[] = ['density', 'thickness', 'chaos']
+
 export const SHAPES: Record<ShapeId, ShapeSpec> = {
-  ribbons: { label: 'Rubans', usesDensity: true, keptAcrossLooks: false },
-  zigzag: { label: 'Zigzag', usesDensity: true, keptAcrossLooks: false },
-  tangle: { label: 'Nœuds', usesDensity: true, keptAcrossLooks: false },
-  shards: { label: 'Éclats', usesDensity: true, keptAcrossLooks: false },
-  liquid: { label: 'Liquide', usesDensity: true, keptAcrossLooks: false },
-  drawn: { label: 'Dessin', usesDensity: false, keptAcrossLooks: true },
+  ribbons: { label: 'Rubans', controls: GENERATED_CONTROLS, keptAcrossLooks: false },
+  zigzag: { label: 'Zigzag', controls: GENERATED_CONTROLS, keptAcrossLooks: false },
+  tangle: { label: 'Nœuds', controls: GENERATED_CONTROLS, keptAcrossLooks: false },
+  shards: { label: 'Éclats', controls: GENERATED_CONTROLS, keptAcrossLooks: false },
+  liquid: { label: 'Liquide', controls: GENERATED_CONTROLS, keptAcrossLooks: false },
+  drawn: { label: 'Dessin', controls: ['thickness', 'chaos'], keptAcrossLooks: true },
+  none: { label: 'Aucun', controls: [], keptAcrossLooks: true },
 }
 
 export const TEXT_POSITIONS: Record<TextPosition, { label: string }> = {
@@ -74,6 +80,7 @@ export function createCoverSettings(lookId: LookId = 'chrome', seed = createSeed
     thickness: 1,
     chaos: 0.5,
     drawnStrokes: [],
+    image: null,
     tint: '#ffffff',
     backgroundTop: '#ffffff',
     backgroundBottom: '#ffffff',

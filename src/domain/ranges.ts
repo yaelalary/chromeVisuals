@@ -15,6 +15,10 @@ export const RANGES = {
   grain: { min: 0, max: 0.5, step: 0.01, decimals: 2 },
   textScale: { min: 0.4, max: 2, step: 0.05, decimals: 2 },
   brushSize: { min: 0.3, max: 3, step: 0.05, decimals: 2 },
+  imageScale: { min: 0.1, max: 1.5, step: 0.01, decimals: 2 },
+  imageDepth: { min: 0, max: 3, step: 0.05, decimals: 2 },
+  imageOffset: { min: -0.5, max: 0.5, step: 0.01, decimals: 2 },
+  imageThreshold: { min: 0.05, max: 0.95, step: 0.01, decimals: 2 },
 } as const satisfies Record<string, NumericRange>
 
 export function clampToRange(value: number, range: NumericRange): number {

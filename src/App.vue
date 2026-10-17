@@ -6,8 +6,10 @@ import DrawingToolbar from './components/stage/DrawingToolbar.vue'
 import { useCoverExport } from './composables/useCoverExport'
 import { useCoverSettings } from './composables/useCoverSettings'
 import { useDrawingTools } from './composables/useDrawingTools'
+import { useImageImport } from './composables/useImageImport'
 
-const { settings, update, selectLook, reshuffle } = useCoverSettings()
+const { settings, update, selectLook, reshuffle, setImageLayer, updateImage } = useCoverSettings()
+const { importing, importError, importImage, removeImage } = useImageImport(settings, setImageLayer)
 const { mode, brush, isDrawingShape, isDrawing, canUndo, addStroke, undo, clear, setBrush } = useDrawingTools(
   settings,
   update,
@@ -51,7 +53,12 @@ const renderUnavailable = computed(() => stage.value?.failed ?? true)
           :exporting="exporting"
           :export-error="exportError"
           :export-disabled="renderUnavailable"
+          :importing="importing"
+          :import-error="importError"
           @update="update"
+          @import-image="importImage"
+          @update-image="updateImage"
+          @remove-image="removeImage"
           @select-look="selectLook"
           @reshuffle="reshuffle"
           @export="exportCover"
