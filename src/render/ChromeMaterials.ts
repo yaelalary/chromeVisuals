@@ -13,7 +13,11 @@ export interface SurfaceFinish {
 const BASE_CLEARCOAT_ROUGHNESS = 0.04
 const ANISOTROPY_ROTATION = Math.PI / 2
 
-/** Matériaux chrome du motif et de l'image : ambiance, teinte et texture de surface réunies. */
+/**
+ * Matériaux chrome du motif et de l'image : ambiance, teinte et texture de surface réunies.
+ * Les shaders ne sont réévalués que si la carte de relief ou les couleurs d'image changent ;
+ * three.js gère lui-même l'activation de la transmission, de l'irisation ou du vernis.
+ */
 export class ChromeMaterials {
   readonly form = new MeshPhysicalMaterial({ side: DoubleSide })
   readonly image = new MeshPhysicalMaterial({ side: DoubleSide })
@@ -21,6 +25,7 @@ export class ChromeMaterials {
   private tint = '#ffffff'
   private finish: SurfaceFinish = { textureId: 'smooth', strength: 0, scale: 1 }
   private normalMap: DataTexture | null = null
+  private appliedNormalMap: DataTexture | null = null
   private imageColors = false
 
   setLook(spec: MaterialSpec, tint: string): void {
@@ -55,6 +60,7 @@ export class ChromeMaterials {
     const texture = SURFACE_TEXTURES[this.finish.textureId]
     const strength = this.normalMap ? this.finish.strength : 0
     this.normalMap?.repeat.set(...seamlessRepeat(this.finish.scale))
+    const shaderChanged = this.appliedNormalMap !== this.normalMap || this.image.vertexColors !== this.imageColors
 
     for (const material of [this.form, this.image]) {
       material.setValues({
@@ -77,8 +83,9 @@ export class ChromeMaterials {
       material.normalScale.setScalar(strength * texture.relief)
       material.clearcoatNormalScale.setScalar(strength * texture.relief)
       material.color.set(this.tint)
-      material.needsUpdate = true
+      if (shaderChanged) material.needsUpdate = true
     }
     this.image.vertexColors = this.imageColors
+    this.appliedNormalMap = this.normalMap
   }
 }

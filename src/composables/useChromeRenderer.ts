@@ -49,7 +49,7 @@ export function useChromeRenderer(
 
   watch(
     [renderer, field('backgroundStyle'), field('backgroundTop'), field('backgroundBottom'), field('seed')],
-    ([instance, style, top, bottom, seed]) => instance?.setBackground(style, { top, bottom }, seed),
+    ([instance, style, top, bottom, seed]) => instance?.setBackground({ style, colors: { top, bottom }, seed }),
     { immediate: true },
   )
 
