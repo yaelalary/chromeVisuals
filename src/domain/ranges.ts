@@ -25,6 +25,9 @@ export const RANGES = {
   vignette: { min: 0, max: 1, step: 0.01, decimals: 2 },
   sparkles: { min: 0, max: 1, step: 0.01, decimals: 2 },
   scanlines: { min: 0, max: 1, step: 0.01, decimals: 2 },
+  stickerSize: { min: 0.04, max: 0.8, step: 0.01, decimals: 2 },
+  stickerRotation: { min: -180, max: 180, step: 1, decimals: 0 },
+  stickerOpacity: { min: 0.1, max: 1, step: 0.01, decimals: 2 },
 } as const satisfies Record<string, NumericRange>
 
 export function clampToRange(value: number, range: NumericRange): number {

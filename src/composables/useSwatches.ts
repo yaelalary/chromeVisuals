@@ -1,12 +1,14 @@
 import { computed, ref, watchEffect, type Ref } from 'vue'
 import { BACKGROUND_STYLES, type BackgroundStyleId } from '../domain/backgrounds'
+import { STICKERS, type StickerId } from '../domain/stickerShapes'
 import { SURFACE_TEXTURES, type SurfaceTextureId } from '../domain/surfaceTextures'
-import { backgroundThumbnail, textureThumbnail } from '../render/thumbnails'
+import { backgroundThumbnail, stickerThumbnail, textureThumbnail } from '../render/thumbnails'
 import type { Swatch } from '../components/ui/options'
 
 const THUMBNAIL_SEED = 11
 
 let textureSwatchCache: Swatch<SurfaceTextureId>[] | null = null
+let stickerSwatchCache: Swatch<StickerId>[] | null = null
 
 /** Vignettes des textures de surface ; elles ne dépendent d'aucun réglage, on les calcule une fois. */
 export function useTextureSwatches() {
@@ -30,4 +32,14 @@ export function useBackgroundSwatches(colors: Ref<{ top: string; bottom: string 
     }))
   })
   return swatches
+}
+
+/** Vignettes de la bibliothèque de stickers, calculées une fois. */
+export function useStickerSwatches() {
+  stickerSwatchCache ??= (Object.keys(STICKERS) as StickerId[]).map((id) => ({
+    value: id,
+    label: STICKERS[id].label,
+    imageUrl: stickerThumbnail(id),
+  }))
+  return computed(() => stickerSwatchCache ?? [])
 }

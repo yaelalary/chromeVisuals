@@ -3,8 +3,9 @@ import { ensureFontLoaded } from '../services/fontService'
 import { paintCoverText } from './coverText'
 import { paintEffects } from './effectsOverlay'
 import { GRAIN_BLEND_MODE, paintGrain } from './grain'
+import { paintStickers } from './stickerPainter'
 
-/** Superpose les calques de la cover dans le même ordre que l'aperçu : scène 3D, grain, effets, texte. */
+/** Superpose les calques de la cover dans le même ordre que l'aperçu : scène 3D, grain, effets, stickers, texte. */
 export async function composeCover(scene: HTMLCanvasElement, settings: CoverSettings, size: number): Promise<HTMLCanvasElement> {
   const output = document.createElement('canvas')
   output.width = size
@@ -26,6 +27,7 @@ export async function composeCover(scene: HTMLCanvasElement, settings: CoverSett
   const effectsContext = effects.getContext('2d')
   if (effectsContext) paintEffects(effectsContext, settings, size)
   context.drawImage(effects, 0, 0)
+  paintStickers(context, settings.stickers, size)
 
   await ensureFontLoaded(settings.fontId, settings.title + settings.subtitle)
   paintCoverText(context, settings, size)

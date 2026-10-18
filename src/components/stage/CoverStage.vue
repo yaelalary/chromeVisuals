@@ -10,28 +10,36 @@ import { composeCover } from '../../render/composeCover'
 import { GRAIN_BLEND_MODE } from '../../render/grain'
 import AppButton from '../ui/AppButton.vue'
 import InlineMessage from '../ui/InlineMessage.vue'
+import StickerHandles from './StickerHandles.vue'
 
 const props = defineProps<{
   settings: CoverSettings
   drawing: boolean
   brush: Brush
+  selectedStickerId: string | null
 }>()
 
-const emit = defineEmits<{ stroke: [points: Point2[]] }>()
+const emit = defineEmits<{
+  stroke: [points: Point2[]]
+  selectSticker: [id: string | null]
+  moveSticker: [id: string, x: number, y: number]
+}>()
 
 const frame = ref<HTMLElement>()
 const sceneCanvas = ref<HTMLCanvasElement>()
 const grainCanvas = ref<HTMLCanvasElement>()
 const effectsCanvas = ref<HTMLCanvasElement>()
+const stickersCanvas = ref<HTMLCanvasElement>()
 const textCanvas = ref<HTMLCanvasElement>()
 const sketchSurface = ref<SVGSVGElement>()
 
 const settings = toRef(props, 'settings')
 const drawing = toRef(props, 'drawing')
 const orbitEnabled = computed(() => !props.drawing)
+const stickersInteractive = computed(() => !props.drawing)
 const pixelSize = useElementPixelSize(frame)
 const { failed, captureScene, resetView } = useChromeRenderer(sceneCanvas, settings, pixelSize, orbitEnabled)
-useCoverOverlays({ grain: grainCanvas, effects: effectsCanvas, text: textCanvas }, settings, pixelSize)
+useCoverOverlays({ grain: grainCanvas, effects: effectsCanvas, stickers: stickersCanvas, text: textCanvas }, settings, pixelSize)
 
 const sketchWidth = computed(() => brushScreenDiameter(props.brush.size, props.settings.thickness, 1))
 const { previewPath, onPointerDown, onPointerMove, onPointerUp } = useSketchPad(sketchSurface, {
@@ -59,10 +67,18 @@ defineExpose({ capture, failed })
   <div class="stage">
     <div class="stage__viewport">
       <div ref="frame" class="stage__frame">
-        <canvas ref="sceneCanvas" class="stage__layer" />
+        <canvas ref="sceneCanvas" class="stage__layer" @pointerdown="emit('selectSticker', null)" />
         <canvas ref="grainCanvas" class="stage__layer stage__layer--passive" :style="grainStyle" />
         <canvas ref="effectsCanvas" class="stage__layer stage__layer--passive" />
+        <canvas ref="stickersCanvas" class="stage__layer stage__layer--passive" />
         <canvas ref="textCanvas" class="stage__layer stage__layer--passive" />
+        <StickerHandles
+          :stickers="settings.stickers"
+          :selected-id="selectedStickerId"
+          :interactive="stickersInteractive"
+          @select="emit('selectSticker', $event)"
+          @move="(id, x, y) => emit('moveSticker', id, x, y)"
+        />
         <svg
           v-show="drawing"
           ref="sketchSurface"

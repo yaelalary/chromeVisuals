@@ -22,7 +22,7 @@ const items = computed(() => props.options.map((option) => ({ option, active: op
 <template>
   <div class="field">
     <span v-if="!hideLabel" class="field__label">{{ label }}</span>
-    <div class="swatch-picker" role="radiogroup" :aria-label="label">
+    <div class="swatch-grid" role="radiogroup" :aria-label="label">
       <button
         v-for="item in items"
         :key="item.option.value"
@@ -44,54 +44,3 @@ const items = computed(() => props.options.map((option) => ({ option, active: op
     </div>
   </div>
 </template>
-
-<style scoped>
-.swatch-picker {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-2);
-}
-
-.swatch {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-1);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-raised);
-  cursor: pointer;
-  transition: border-color var(--transition);
-}
-
-.swatch:hover {
-  border-color: var(--color-border-strong);
-}
-
-.swatch--active,
-.swatch--active:hover {
-  border-color: var(--color-accent);
-}
-
-.swatch__preview {
-  position: relative;
-  display: block;
-  aspect-ratio: 1;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-}
-
-.swatch__image {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.swatch__label {
-  padding-bottom: var(--space-1);
-  font-size: var(--text-xs);
-  text-align: center;
-  color: var(--color-text);
-}
-</style>

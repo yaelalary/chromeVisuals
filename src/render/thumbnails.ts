@@ -1,12 +1,16 @@
 import type { BackgroundStyleId } from '../domain/backgrounds'
 import { heightToNormalMap, textureHeights, type SurfaceTextureId } from '../domain/surfaceTextures'
+import type { StickerId } from '../domain/stickerShapes'
 import { paintBackground, type BackgroundColors } from './backgroundPainters'
+import { drawSticker } from './stickerPainter'
 
 export const THUMBNAIL_SIZE = 96
 
 const LIGHT = normalize([-0.5, 0.6, 0.65])
 const SHEEN_LOW = 70
 const SHEEN_HIGH = 235
+const STICKER_THUMBNAIL_COLOR = '#e6ebff'
+const STICKER_THUMBNAIL_FILL = 0.82
 
 function normalize([x, y, z]: number[]): number[] {
   const length = Math.hypot(x, y, z)
@@ -43,5 +47,21 @@ export function textureThumbnail(id: SurfaceTextureId): string {
 export function backgroundThumbnail(style: BackgroundStyleId, colors: BackgroundColors, seed: number): string {
   const canvas = document.createElement('canvas')
   paintBackground(canvas, THUMBNAIL_SIZE, style, colors, seed)
+  return canvas.toDataURL('image/png')
+}
+
+export function stickerThumbnail(id: StickerId): string {
+  const canvas = document.createElement('canvas')
+  canvas.width = THUMBNAIL_SIZE
+  canvas.height = THUMBNAIL_SIZE
+  const context = canvas.getContext('2d')
+  if (!context) return ''
+  const center = THUMBNAIL_SIZE / 2
+  drawSticker(context, id, center, center, THUMBNAIL_SIZE * STICKER_THUMBNAIL_FILL, {
+    rotation: 0,
+    color: STICKER_THUMBNAIL_COLOR,
+    finish: 'flat',
+    opacity: 1,
+  })
   return canvas.toDataURL('image/png')
 }

@@ -3,6 +3,7 @@ import type { CoverSettings } from '../domain/cover'
 import { paintCoverText, TEXT_INPUT_KEYS } from '../render/coverText'
 import { EFFECT_INPUT_KEYS, paintEffects } from '../render/effectsOverlay'
 import { paintGrain } from '../render/grain'
+import { paintStickers } from '../render/stickerPainter'
 import { ensureFontLoaded } from '../services/fontService'
 
 type CanvasRef = Ref<HTMLCanvasElement | undefined>
@@ -10,6 +11,7 @@ type CanvasRef = Ref<HTMLCanvasElement | undefined>
 export interface OverlayCanvases {
   grain: CanvasRef
   effects: CanvasRef
+  stickers: CanvasRef
   text: CanvasRef
 }
 
@@ -23,7 +25,7 @@ function prepareContext(canvas: HTMLCanvasElement, size: number): CanvasRenderin
   return canvas.getContext('2d')
 }
 
-/** Calques 2D de l'aperçu (grain, effets, texte), peints avec les mêmes fonctions que l'export. */
+/** Calques 2D de l'aperçu (grain, effets, stickers, texte), peints avec les mêmes fonctions que l'export. */
 export function useCoverOverlays(canvases: OverlayCanvases, settings: Readonly<Ref<CoverSettings>>, pixelSize: Ref<number>) {
   const sources = <K extends keyof CoverSettings>(keys: readonly K[]) => keys.map((key) => () => settings.value[key])
 
@@ -35,6 +37,12 @@ export function useCoverOverlays(canvases: OverlayCanvases, settings: Readonly<R
     if (!canvas || size <= 0) return
     const context = prepareContext(canvas, size)
     if (context) paintEffects(context, pickKeys(settings.value, EFFECT_INPUT_KEYS), size)
+  })
+
+  watch([canvases.stickers, pixelSize, () => settings.value.stickers], ([canvas, size, stickers]) => {
+    if (!canvas || size <= 0) return
+    const context = prepareContext(canvas, size)
+    if (context) paintStickers(context, stickers, size)
   })
 
   let paintRequest = 0

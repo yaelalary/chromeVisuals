@@ -5,6 +5,7 @@ import type { ImageLayer } from './imageLayer'
 import { LOOKS, type LookId } from './looks'
 import { createSeed } from './random'
 import type { StrokeShapeId } from './shapes'
+import type { PlacedSticker } from './stickers'
 import type { SurfaceTextureId } from './surfaceTextures'
 import type { SymmetryId } from './symmetry'
 
@@ -22,6 +23,7 @@ export interface CoverSettings {
   chaos: number
   drawnStrokes: readonly DrawnStroke[]
   image: ImageLayer | null
+  stickers: readonly PlacedSticker[]
   symmetry: SymmetryId
   tint: string
   surfaceTexture: SurfaceTextureId
@@ -102,6 +104,7 @@ export function createCoverSettings(lookId: LookId = 'chrome', seed = createSeed
     chaos: 0.5,
     drawnStrokes: [],
     image: null,
+    stickers: [],
     symmetry: 'none',
     tint: '#ffffff',
     surfaceTexture: 'smooth',

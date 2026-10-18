@@ -8,6 +8,7 @@ import { useCoverExport } from './composables/useCoverExport'
 import { useCoverSettings } from './composables/useCoverSettings'
 import { useDrawingTools } from './composables/useDrawingTools'
 import { useImageImport } from './composables/useImageImport'
+import { useStickers } from './composables/useStickers'
 
 const { settings, update, selectLook, reshuffle, surprise, setImageLayer, updateImage } = useCoverSettings()
 const { importing, importError, importImage, removeImage } = useImageImport(settings, setImageLayer)
@@ -15,6 +16,18 @@ const { mode, brush, isDrawingShape, isDrawing, canUndo, addStroke, undo, clear,
   settings,
   update,
 )
+
+const {
+  selectedId: selectedStickerId,
+  selected: selectedSticker,
+  addSticker,
+  selectSticker,
+  moveSticker,
+  updateSelected: updateSticker,
+  duplicateSelected: duplicateSticker,
+  removeSelected: removeSticker,
+  clearStickers,
+} = useStickers(settings, update)
 
 const stage = ref<InstanceType<typeof CoverStage>>()
 const { exporting, exportError, exportCover } = useCoverExport(() => stage.value, settings)
@@ -37,7 +50,10 @@ const renderUnavailable = computed(() => stage.value?.failed ?? true)
         :settings="settings"
         :drawing="isDrawing"
         :brush="brush"
+        :selected-sticker-id="selectedStickerId"
         @stroke="addStroke"
+        @select-sticker="selectSticker"
+        @move-sticker="moveSticker"
       >
         <template #tools>
           <DrawingToolbar
@@ -59,10 +75,16 @@ const renderUnavailable = computed(() => stage.value?.failed ?? true)
           :export-disabled="renderUnavailable"
           :importing="importing"
           :import-error="importError"
+          :selected-sticker="selectedSticker"
           @update="update"
           @import-image="importImage"
           @update-image="updateImage"
           @remove-image="removeImage"
+          @add-sticker="addSticker"
+          @update-sticker="updateSticker"
+          @duplicate-sticker="duplicateSticker"
+          @remove-sticker="removeSticker"
+          @clear-stickers="clearStickers"
           @select-look="selectLook"
           @reshuffle="reshuffle"
           @export="exportCover"

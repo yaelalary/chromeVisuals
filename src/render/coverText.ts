@@ -1,6 +1,7 @@
 import type { CoverSettings, TextStyle } from '../domain/cover'
 import { cssFont, FONTS, type FontSpec } from '../domain/fonts'
 import { fitFontSize, layoutCoverText, type TextLine } from '../domain/textLayout'
+import { chromeGradient } from './chromeGradient'
 
 export const TEXT_INPUT_KEYS = [
   'title',
@@ -14,27 +15,13 @@ export const TEXT_INPUT_KEYS = [
 
 export type CoverTextInput = Pick<CoverSettings, (typeof TEXT_INPUT_KEYS)[number]>
 
-const CHROME_TEXT_STOPS: ReadonlyArray<readonly [number, string]> = [
-  [0, '#ffffff'],
-  [0.42, '#c4c9d2'],
-  [0.5, '#3a3e46'],
-  [0.56, '#eef0f4'],
-  [0.8, '#9aa0ab'],
-  [1, '#f6f7f9'],
-]
-
 const SHADOW_RATIO = 0.08
 
 type FillFactory = (context: CanvasRenderingContext2D, line: TextLine, input: CoverTextInput) => string | CanvasGradient
 
 const TEXT_FILLS: Record<TextStyle, FillFactory> = {
   plain: (_context, _line, input) => input.textColor,
-  chrome: (context, line) => {
-    const half = line.fontSize / 2
-    const gradient = context.createLinearGradient(0, line.centerY - half, 0, line.centerY + half)
-    for (const [offset, color] of CHROME_TEXT_STOPS) gradient.addColorStop(offset, color)
-    return gradient
-  },
+  chrome: (context, line) => chromeGradient(context, line.centerY - line.fontSize / 2, line.centerY + line.fontSize / 2),
 }
 
 const TEXT_SHADOWS: Record<TextStyle, string> = {

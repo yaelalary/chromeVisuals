@@ -9,6 +9,7 @@ import {
 } from '../../domain/imageLayer'
 import { RANGES } from '../../domain/ranges'
 import type { ImageLayerPatch } from '../../composables/useCoverSettings'
+import { createPatchSetter } from '../../composables/settingsPatch'
 import AppButton from '../ui/AppButton.vue'
 import FileButton from '../ui/FileButton.vue'
 import InlineMessage from '../ui/InlineMessage.vue'
@@ -37,9 +38,7 @@ const keepOptions = optionsFrom(IMAGE_KEEPS)
 
 const needsThreshold = computed(() => !!props.image && usesLuminanceMask(props.image))
 
-function set<K extends keyof ImageLayerPatch>(key: K, value: ImageLayerPatch[K]): void {
-  emit('update', { [key]: value })
-}
+const set = createPatchSetter<ImageLayerPatch>((patch) => emit('update', patch))
 </script>
 
 <template>

@@ -13,6 +13,7 @@ A small web tool for making Y2K-style chrome artwork for music covers.
 - **Backgrounds**: gradient, glow, retro grid, stars, halftone, rays, clouds
 - **Effects**: bloom, sparkles, chromatic aberration, vignette, grain, scanlines
 - **Symmetry**: mirror, quadrants and kaleidoscope
+- **Stickers**: a library of Y2K vector assets (stars, sparkles, globes, hearts, butterflies…) to drag onto the cover, in flat colour or chrome
 - **Surprise** button to roll a random combination
 - Title and artist text, exported as a square PNG (1500 or 3000 px)
 

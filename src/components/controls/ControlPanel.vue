@@ -2,6 +2,8 @@
 import { computed, ref } from 'vue'
 import type { CoverSettings, ExportSize } from '../../domain/cover'
 import type { LookId } from '../../domain/looks'
+import type { StickerId } from '../../domain/stickerShapes'
+import type { PlacedSticker, PlacedStickerPatch } from '../../domain/stickers'
 import type { CoverSettingsPatch, ImageLayerPatch } from '../../composables/useCoverSettings'
 import PanelSection from '../ui/PanelSection.vue'
 import TabBar from '../ui/TabBar.vue'
@@ -13,9 +15,10 @@ import FormSection from './FormSection.vue'
 import ImageSection from './ImageSection.vue'
 import LookPicker from './LookPicker.vue'
 import MaterialSection from './MaterialSection.vue'
+import StickersSection from './StickersSection.vue'
 import TextSection from './TextSection.vue'
 
-type PanelTab = 'composition' | 'material' | 'effects' | 'text'
+type PanelTab = 'composition' | 'material' | 'effects' | 'stickers' | 'text'
 
 defineProps<{
   settings: CoverSettings
@@ -24,6 +27,7 @@ defineProps<{
   exportDisabled?: boolean
   importing: boolean
   importError?: string
+  selectedSticker: PlacedSticker | null
 }>()
 
 const emit = defineEmits<{
@@ -34,12 +38,18 @@ const emit = defineEmits<{
   importImage: [file: File]
   updateImage: [patch: ImageLayerPatch]
   removeImage: []
+  addSticker: [stickerId: StickerId]
+  updateSticker: [patch: PlacedStickerPatch]
+  duplicateSticker: []
+  removeSticker: []
+  clearStickers: []
 }>()
 
 const TABS: Option<PanelTab>[] = [
-  { value: 'composition', label: 'Composition' },
+  { value: 'composition', label: 'Scène' },
   { value: 'material', label: 'Matière' },
   { value: 'effects', label: 'Effets' },
+  { value: 'stickers', label: 'Stickers' },
   { value: 'text', label: 'Texte' },
 ]
 
@@ -47,6 +57,7 @@ const activeTab = ref<PanelTab>('composition')
 const showsComposition = computed(() => activeTab.value === 'composition')
 const showsMaterial = computed(() => activeTab.value === 'material')
 const showsEffects = computed(() => activeTab.value === 'effects')
+const showsStickers = computed(() => activeTab.value === 'stickers')
 </script>
 
 <template>
@@ -72,6 +83,16 @@ const showsEffects = computed(() => activeTab.value === 'effects')
         <BackgroundSection :settings="settings" @update="emit('update', $event)" />
       </template>
       <EffectsSection v-else-if="showsEffects" :settings="settings" @update="emit('update', $event)" />
+      <StickersSection
+        v-else-if="showsStickers"
+        :count="settings.stickers.length"
+        :selected="selectedSticker"
+        @add="emit('addSticker', $event)"
+        @update="emit('updateSticker', $event)"
+        @duplicate="emit('duplicateSticker')"
+        @remove="emit('removeSticker')"
+        @clear="emit('clearStickers')"
+      />
       <TextSection v-else :settings="settings" @update="emit('update', $event)" />
     </div>
     <footer class="control-panel__footer">
